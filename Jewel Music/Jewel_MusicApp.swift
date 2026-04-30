@@ -23,6 +23,17 @@ struct Jewel_MusicApp: App {
         }
     }()
 
+    init() {
+        // Ensure the app's working folder exists in Documents so it appears in Files app
+        do {
+            try AppFiles.ensureAppFolderExists()
+            AppFiles.ensurePlaceholderFile()
+        } catch {
+            // It's generally safe to log here; consider surfacing to diagnostics later
+            NSLog("Failed to create app folder: \(error.localizedDescription)")
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
