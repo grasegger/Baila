@@ -21,10 +21,10 @@ enum AppFiles {
 
     /// Creates a tiny placeholder file so the Files app shows the container immediately.
     static func ensurePlaceholderFile() {
-        let placeholderURL = documentsDirectory.appendingPathComponent(".keep")
+        let placeholderURL = documentsDirectory.appendingPathComponent("Put music here.txt")
         if !FileManager.default.fileExists(atPath: placeholderURL.path) {
-            let data = Data() // empty file
-            try? data.write(to: placeholderURL)
+            let data = "Put your music here!"
+            try? data.write(to: placeholderURL, atomically: true, encoding: .utf8)
         }
     }
 }
