@@ -10,8 +10,8 @@ import SwiftData
 @Model
 class Playlist {
     @Attribute(.unique) var singletonID: String
-    var tracks: [Track]
-    var currentTrack : Track?
+    @Relationship(deleteRule: .nullify) var tracks: [Track]
+    @Relationship(deleteRule: .nullify) var currentTrack : Track?
     var currentTrackPositionMS: Int
 
     init(singletonID: String = Playlist.defaultSingletonID, tracks: [Track] = [], currentTrack: Track? = nil, currentTrackPositionMS: Int = 0) {
@@ -22,4 +22,10 @@ class Playlist {
     }
 
     static let defaultSingletonID = "main"
+
+    func flush() {
+        tracks.removeAll()
+        currentTrack = nil
+        currentTrackPositionMS = 0
+    }
 }
