@@ -25,22 +25,41 @@ struct ContentView: View {
         }
     }
 
+    private var sortedArtists: [Artist] {
+        artists.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private var artistSections: [(title: String, artists: [Artist])] {
+        let groupedArtists = Dictionary(grouping: sortedArtists, by: artistSectionTitle(for:))
+
+        return groupedArtists
+            .map { key, value in
+                (title: key, artists: value)
+            }
+            .sorted { lhs, rhs in
+                lhs.title.localizedCompare(rhs.title) == .orderedAscending
+            }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 List {
-                    ForEach(
-                        artists
-                            .sorted { $0.name.lowercased() < $1.name.lowercased()
-                        }) { artist in
-                        ArtistListItem(artist: artist, onSelectAlbum: playAlbum)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                    ForEach(artistSections, id: \.title) { section in
+                        Section {
+                            ForEach(section.artists) { artist in
+                                ArtistListItem(artist: artist, onSelectAlbum: playAlbum)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
+                            }
+                        } header: {
+                            EmptyView()
+                        }
+                        .sectionIndexLabel(section.title)
                     }
                 }
-//                .scrollContentBackground(.hidden)
-//                .background(Color.clear)
+                .listSectionIndexVisibility(.visible)
             }
             .listStyle(.plain)
             .toolbar {
@@ -138,6 +157,15 @@ struct ContentView: View {
             Logger.ui.error("Failed to fetch playlist: \(error.localizedDescription)")
             return nil
         }
+    }
+
+    private func artistSectionTitle(for artist: Artist) -> String {
+        guard let firstCharacter = artist.name.trimmingCharacters(in: .whitespacesAndNewlines).first else {
+            return "#"
+        }
+
+        let title = String(firstCharacter).uppercased()
+        return title.rangeOfCharacter(from: .letters) == nil ? "#" : title
     }
 }
 
