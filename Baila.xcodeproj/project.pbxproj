@@ -11,13 +11,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CBBC5A852FA3B12F005FDAEF /* Jewel Music.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Jewel Music.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBBC5A852FA3B12F005FDAEF /* Baila.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Baila.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CBBC5A872FA3B12F005FDAEF /* Jewel Music */ = {
+		CBBC5A872FA3B12F005FDAEF /* Baila */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Jewel Music";
+			path = Baila;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +37,7 @@
 		CBBC5A7C2FA3B12F005FDAEF = {
 			isa = PBXGroup;
 			children = (
-				CBBC5A872FA3B12F005FDAEF /* Jewel Music */,
+				CBBC5A872FA3B12F005FDAEF /* Baila */,
 				CBBC5A862FA3B12F005FDAEF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		CBBC5A862FA3B12F005FDAEF /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CBBC5A852FA3B12F005FDAEF /* Jewel Music.app */,
+				CBBC5A852FA3B12F005FDAEF /* Baila.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CBBC5A842FA3B12F005FDAEF /* Jewel Music */ = {
+		CBBC5A842FA3B12F005FDAEF /* Baila */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CBBC5A922FA3B130005FDAEF /* Build configuration list for PBXNativeTarget "Jewel Music" */;
+			buildConfigurationList = CBBC5A922FA3B130005FDAEF /* Build configuration list for PBXNativeTarget "Baila" */;
 			buildPhases = (
 				CBBC5A812FA3B12F005FDAEF /* Sources */,
 				CBBC5A822FA3B12F005FDAEF /* Frameworks */,
@@ -66,14 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CBBC5A872FA3B12F005FDAEF /* Jewel Music */,
+				CBBC5A872FA3B12F005FDAEF /* Baila */,
 			);
-			name = "Jewel Music";
+			name = Baila;
 			packageProductDependencies = (
 				CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */,
 			);
-			productName = "Jewel Music";
-			productReference = CBBC5A852FA3B12F005FDAEF /* Jewel Music.app */;
+			productName = Baila;
+			productReference = CBBC5A852FA3B12F005FDAEF /* Baila.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -91,7 +91,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CBBC5A802FA3B12F005FDAEF /* Build configuration list for PBXProject "Jewel Music" */;
+			buildConfigurationList = CBBC5A802FA3B12F005FDAEF /* Build configuration list for PBXProject "Baila" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,7 +108,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CBBC5A842FA3B12F005FDAEF /* Jewel Music */,
+				CBBC5A842FA3B12F005FDAEF /* Baila */,
 			);
 		};
 /* End PBXProject section */
@@ -266,7 +266,7 @@
 				DEVELOPMENT_TEAM = FSZ728M7X7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Jewel-Music-Info.plist";
+				INFOPLIST_FILE = "Baila-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Baila;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -309,7 +309,7 @@
 				DEVELOPMENT_TEAM = FSZ728M7X7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Jewel-Music-Info.plist";
+				INFOPLIST_FILE = "Baila-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Baila;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
@@ -344,7 +344,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CBBC5A802FA3B12F005FDAEF /* Build configuration list for PBXProject "Jewel Music" */ = {
+		CBBC5A802FA3B12F005FDAEF /* Build configuration list for PBXProject "Baila" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CBBC5A902FA3B130005FDAEF /* Debug */,
@@ -353,7 +353,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CBBC5A922FA3B130005FDAEF /* Build configuration list for PBXNativeTarget "Jewel Music" */ = {
+		CBBC5A922FA3B130005FDAEF /* Build configuration list for PBXNativeTarget "Baila" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CBBC5A932FA3B130005FDAEF /* Debug */,
