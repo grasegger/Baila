@@ -17,13 +17,15 @@ struct AlbumListItem: View {
         Button {
             onTap(album)
         } label: {
-            VStack {
+            VStack(alignment: .leading, spacing: 8) {
                 albumArtwork
                 Text(album.name)
+                    .font(.subheadline)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
             .padding(.bottom, 16)
         }
         .buttonStyle(.plain)
@@ -32,27 +34,31 @@ struct AlbumListItem: View {
     @ViewBuilder
     private var albumArtwork: some View {
         if let albumArt = UIImage(data: album.albumArt) {
-            ZStack {
-                Color.clear
-                    .glassEffect(in: RoundedRectangle(cornerRadius: 0, style: .continuous))
+            GeometryReader { proxy in
+                ZStack {
+                    Color.clear
+                        .glassEffect(in: RoundedRectangle(cornerRadius: 0, style: .continuous))
 
-                Image(uiImage: albumArt)
-                    .resizable()
-                    .scaledToFill()
-                    .clipShape(RoundedRectangle(cornerRadius: 0, style: .continuous))
-                    .padding(1)
-                    .overlay(alignment: .topTrailing) {
-                        Text(album.releaseDate, format: .dateTime.year())
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.primary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .glassEffect()
-                            .padding(4)
-                    }
+                    Image(uiImage: albumArt)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width - 2, height: proxy.size.width - 2)
+                        .clipShape(RoundedRectangle(cornerRadius: 0, style: .continuous))
+                        .overlay(alignment: .topTrailing) {
+                            Text(album.releaseDate, format: .dateTime.year())
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.primary)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .glassEffect()
+                                .padding(4)
+                        }
+                }
+                .frame(width: proxy.size.width, height: proxy.size.width)
+                .clipped()
+                .compositingGroup()
             }
-            .clipped()
-            .compositingGroup()
+            .aspectRatio(1, contentMode: .fit)
         }
     }
 }
