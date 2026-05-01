@@ -18,16 +18,17 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack() {
-                    ForEach(
-                        artists
-                            .sorted { $0.name.lowercased() < $1.name.lowercased()
-                        }) { artist in
-                        ArtistListItem(artist: artist)
-                    }
+            List {
+                ForEach(
+                    artists
+                        .sorted { $0.name.lowercased() < $1.name.lowercased()
+                    }) { artist in
+                    ArtistListItem(artist: artist)
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
                 }
             }
+            .listStyle(.plain)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("23564 Albums")
@@ -69,9 +70,6 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: groupByArtist ? "person.circle.fill" : "person.circle")
                     }
-                }
-                ToolbarItem(placement: .bottomBar) {
-                    Image(systemName: "stop.fill")
                 }
             }
         }

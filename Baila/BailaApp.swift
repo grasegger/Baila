@@ -25,6 +25,7 @@ struct BailaApp : App {
             CD.self,
             Album.self,
             Artist.self,
+            Playlist.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -42,6 +43,7 @@ struct BailaApp : App {
         } catch {
             Logger.ui.error("Failed to create app folder: \(error.localizedDescription)")
         }
+        ensurePlaylistExists(modelContainer: sharedModelContainer)
         BailaApp.registerBackgroundTask(modelContainer: sharedModelContainer)
         BailaApp.scheduleAppRefreshStatic()
     }
@@ -65,7 +67,7 @@ struct BailaApp : App {
     }
 
     static func registerBackgroundTask(modelContainer: ModelContainer) {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.github.grasegger.JewelMusic.backgroundrefresh", using: nil) { task in
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.github.grasegger.Baila.backgroundrefresh", using: nil) { task in
             Task {
                 do {
                     try await TagReader.scanAndPersistMusicFilesStatic(modelContainer: modelContainer)
@@ -79,8 +81,27 @@ struct BailaApp : App {
     }
 
     static func scheduleAppRefreshStatic() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.github.grasegger.JewelMusic.backgroundrefresh")
+        let request = BGAppRefreshTaskRequest(identifier: "com.github.grasegger.Baila.backgroundrefresh")
         request.earliestBeginDate = Date(timeIntervalSinceNow: 60 * 60) // 1 hour
         try? BGTaskScheduler.shared.submit(request)
+    }
+
+    private func ensurePlaylistExists(modelContainer: ModelContainer) {
+        let context = ModelContext(modelContainer)
+        let singletonID = Playlist.defaultSingletonID
+        let descriptor = FetchDescriptor<Playlist>(
+            predicate: #Predicate { $0.singletonID == singletonID }
+        )
+
+        do {
+            let playlist = try context.fetch(descriptor)
+
+            if playlist.isEmpty {
+                context.insert(Playlist())
+                try context.save()
+            }
+        } catch {
+            Logger.ui.error("Failed to ensure playlist exists: \(error.localizedDescription)")
+        }
     }
 }
