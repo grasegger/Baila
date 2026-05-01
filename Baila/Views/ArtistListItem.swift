@@ -27,7 +27,7 @@ struct ArtistListItem: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
 
-            LazyVGrid(columns: columns, spacing: 0) {
+            LazyVGrid(columns: columns, spacing: 1) {
                 ForEach(
                     artist.albums.sorted {$0.releaseDate > $1.releaseDate },
                     id: \.self

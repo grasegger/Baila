@@ -23,10 +23,6 @@ struct AlbumListItem: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                Text(album.releaseDate, format: .dateTime.year())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .font(Font.body.monospacedDigit())
-                    .foregroundStyle(.secondary)
             }
             .padding(.bottom, 16)
         }
@@ -36,20 +32,27 @@ struct AlbumListItem: View {
     @ViewBuilder
     private var albumArtwork: some View {
         if let albumArt = UIImage(data: album.albumArt) {
-            Image(uiImage: albumArt)
-                .resizable()
-                .scaledToFit()
-                .clipped()
-                .frame(width: 120, height: 120)
-        } else {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.tertiary)
-                .overlay {
-                    Image(systemName: "music.note.list")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(width: 120, height: 120)
+            ZStack {
+                Color.clear
+                    .glassEffect(in: RoundedRectangle(cornerRadius: 0, style: .continuous))
+
+                Image(uiImage: albumArt)
+                    .resizable()
+                    .scaledToFill()
+                    .clipShape(RoundedRectangle(cornerRadius: 0, style: .continuous))
+                    .padding(1)
+                    .overlay(alignment: .topTrailing) {
+                        Text(album.releaseDate, format: .dateTime.year())
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .glassEffect()
+                            .padding(4)
+                    }
+            }
+            .clipped()
+            .compositingGroup()
         }
     }
 }

@@ -69,6 +69,10 @@ class TagReader {
     ) -> Track {
         let existing = cd.tracks.first(where: { $0.name == name })
         if let existing = existing {
+            existing.artist = artist
+            existing.number = number
+            existing.CD = cd
+            existing.file = file
             return existing
         } else {
             return Track(

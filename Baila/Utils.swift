@@ -6,6 +6,7 @@
 //
 import Foundation
 import AVFoundation
+import MediaPlayer
 import OSLog
 import SwiftData
 import SwiftUI
@@ -75,23 +76,98 @@ class Utils {
 final class PlaybackController {
     static let shared = PlaybackController()
 
-    private let player = AVPlayer()
+    private var player: AVAudioPlayer?
 
-    private init() {}
+    private init() {
+        configureRemoteCommands()
+    }
 
     func play(track: Track) {
         guard let url = track.file?.path else {
+            Logger.ui.error("Track has no file URL: \(track.name)")
+            return
+        }
+
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            Logger.ui.error("Track file does not exist at path: \(url.path)")
             return
         }
 
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.prepareToPlay()
+            player.play()
+            self.player = player
+            updateNowPlayingInfo(for: track, duration: player.duration)
         } catch {
-            Logger.ui.error("Failed to configure audio session: \(error.localizedDescription)")
+            Logger.ui.error("Failed to start playback for \(url.path): \(error.localizedDescription)")
+        }
+    }
+
+    private func configureRemoteCommands() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        commandCenter.playCommand.isEnabled = true
+        commandCenter.pauseCommand.isEnabled = true
+
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            guard let self, let player = self.player else {
+                return .commandFailed
+            }
+
+            player.play()
+            self.updatePlaybackState()
+            return .success
         }
 
-        player.replaceCurrentItem(with: AVPlayerItem(url: url))
-        player.play()
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            guard let self, let player = self.player else {
+                return .commandFailed
+            }
+
+            player.pause()
+            self.updatePlaybackState()
+            return .success
+        }
+    }
+
+    private func updateNowPlayingInfo(for track: Track, duration: TimeInterval) {
+        var nowPlayingInfo: [String: Any] = [
+            MPMediaItemPropertyTitle: track.name,
+            MPMediaItemPropertyArtist: track.artist,
+            MPMediaItemPropertyPlaybackDuration: duration,
+            MPNowPlayingInfoPropertyElapsedPlaybackTime: 0,
+            MPNowPlayingInfoPropertyPlaybackRate: 1,
+        ]
+
+        if let album = track.CD?.album {
+            nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = album.name
+
+            if let artworkImage = UIImage(data: album.albumArt) {
+                nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(
+                    boundsSize: artworkImage.size
+                ) { _ in
+                    artworkImage
+                }
+            }
+        }
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        updatePlaybackState()
+    }
+
+    private func updatePlaybackState() {
+        guard let player else {
+            MPNowPlayingInfoCenter.default().playbackState = .stopped
+            return
+        }
+
+        var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+        nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime
+        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = player.isPlaying ? 1 : 0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        MPNowPlayingInfoCenter.default().playbackState = player.isPlaying ? .playing : .paused
     }
 }

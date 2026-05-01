@@ -17,6 +17,8 @@ struct ContentView: View {
     @State private var runServer = false
     @State private var runScan = false
 
+    //private let appBackground = Color(white: 0.12)
+
     private var albumCount: Int {
         artists.reduce(0) { partialResult, artist in
             partialResult + artist.albums.count
@@ -25,15 +27,20 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(
-                    artists
-                        .sorted { $0.name.lowercased() < $1.name.lowercased()
-                    }) { artist in
-                    ArtistListItem(artist: artist, onSelectAlbum: playAlbum)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
+            ZStack {
+                List {
+                    ForEach(
+                        artists
+                            .sorted { $0.name.lowercased() < $1.name.lowercased()
+                        }) { artist in
+                        ArtistListItem(artist: artist, onSelectAlbum: playAlbum)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
                 }
+//                .scrollContentBackground(.hidden)
+//                .background(Color.clear)
             }
             .listStyle(.plain)
             .toolbar {
