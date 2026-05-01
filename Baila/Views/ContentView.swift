@@ -17,6 +17,12 @@ struct ContentView: View {
     @State private var runServer = false
     @State private var runScan = false
 
+    private var albumCount: Int {
+        artists.reduce(0) { partialResult, artist in
+            partialResult + artist.albums.count
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -32,7 +38,7 @@ struct ContentView: View {
             .listStyle(.plain)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("23564 Albums")
+                    Text("\(albumCount) Albums")
                         .font(.headline)
                 }
                 ToolbarItem(placement: .topBarLeading) {

@@ -28,24 +28,17 @@ class Utils {
             container.mainContext.insert(Playlist())
 
             for i in 0...26  {
-                let albumArtData = previewAlbumArtData(index: i * 2)
-                let album2ArtData = previewAlbumArtData(index: i * 2 + 1)
-                let artist = Artist(name: "Artist\(i)", albums: [
+                let albumCount = Int.random(in: 1...8)
+                let albums = (0..<albumCount).map { albumIndex in
                     Album(
-                        name: "Album",
-                        releaseDate: Date(),
-                        albumArt: albumArtData,
-                        CDs: [],
-                        artist: nil
-                    ),
-                    Album(
-                        name: "Album2",
-                        releaseDate: Date(timeIntervalSinceNow: -60 * 60 * 24 * 365 * 5),
-                        albumArt: album2ArtData,
+                        name: "Album \(albumIndex + 1)",
+                        releaseDate: Date(timeIntervalSinceNow: -Double(albumIndex) * 60 * 60 * 24 * 365),
+                        albumArt: previewAlbumArtData(index: i * 8 + albumIndex),
                         CDs: [],
                         artist: nil
                     )
-                ])
+                }
+                let artist = Artist(name: "Artist\(i)", albums: albums)
                 container.mainContext.insert(artist)
             }
 
