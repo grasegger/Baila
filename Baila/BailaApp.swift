@@ -18,7 +18,10 @@ extension Logger {
 
 @main
 struct BailaApp : App {
+    private let isRunningPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+
     var sharedModelContainer: ModelContainer = {
+        let isRunningPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
         let schema = Schema([
             CachedFile.self,
             Track.self,
@@ -27,7 +30,10 @@ struct BailaApp : App {
             Artist.self,
             Playlist.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: isRunningPreview
+        )
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -37,6 +43,10 @@ struct BailaApp : App {
     }()
 
     init() {
+        guard !isRunningPreview else {
+            return
+        }
+
         do {
             try AppFiles.ensureAppFolderExists()
             AppFiles.ensurePlaceholderFile()
@@ -53,6 +63,10 @@ struct BailaApp : App {
             ContentView()
                 .modelContainer(sharedModelContainer)
                 .task {
+                    guard !isRunningPreview else {
+                        return
+                    }
+
                     await scanAndPersistMusicFiles(modelContainer: sharedModelContainer)
                 }
         }

@@ -28,4 +28,10 @@ class Playlist {
         currentTrack = nil
         currentTrackPositionMS = 0
     }
+
+    func replaceQueue(with tracks: [Track]) {
+        flush()
+        self.tracks = tracks
+        currentTrack = tracks.first
+    }
 }

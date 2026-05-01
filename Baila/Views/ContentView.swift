@@ -5,6 +5,7 @@
 //  Created by Karl on 30.04.26.
 //
 
+import OSLog
 import SwiftData
 import SwiftUI
 
@@ -23,7 +24,7 @@ struct ContentView: View {
                     artists
                         .sorted { $0.name.lowercased() < $1.name.lowercased()
                     }) { artist in
-                    ArtistListItem(artist: artist)
+                    ArtistListItem(artist: artist, onSelectAlbum: playAlbum)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                 }
@@ -72,6 +73,57 @@ struct ContentView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func playAlbum(_ album: Album) {
+        guard let playlist = playlist() else {
+            return
+        }
+
+        let sortedTracks = album.CDs
+            .sorted { lhs, rhs in
+                lhs.number < rhs.number
+            }
+            .flatMap { cd in
+                cd.tracks.sorted { lhs, rhs in
+                    lhs.number < rhs.number
+                }
+            }
+
+        playlist.replaceQueue(with: sortedTracks)
+
+        do {
+            try modelContext.save()
+        } catch {
+            Logger.ui.error("Failed to save playlist changes: \(error.localizedDescription)")
+        }
+
+        guard let firstTrack = playlist.currentTrack else {
+            return
+        }
+
+        PlaybackController.shared.play(track: firstTrack)
+    }
+
+    private func playlist() -> Playlist? {
+        let singletonID = Playlist.defaultSingletonID
+        let descriptor = FetchDescriptor<Playlist>(
+            predicate: #Predicate { $0.singletonID == singletonID }
+        )
+
+        do {
+            if let existingPlaylist = try modelContext.fetch(descriptor).first {
+                return existingPlaylist
+            }
+
+            let newPlaylist = Playlist()
+            modelContext.insert(newPlaylist)
+            try modelContext.save()
+            return newPlaylist
+        } catch {
+            Logger.ui.error("Failed to fetch playlist: \(error.localizedDescription)")
+            return nil
         }
     }
 }

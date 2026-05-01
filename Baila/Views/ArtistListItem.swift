@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ArtistListItem: View {
     let artist: Artist
+    let onSelectAlbum: (Album) -> Void
 
     let columns = [
         GridItem(.flexible()),
@@ -32,7 +33,8 @@ struct ArtistListItem: View {
                     id: \.self
                 ) { album in
                     AlbumListItem(
-                        album: album
+                        album: album,
+                        onTap: onSelectAlbum
                     )
                 }
             }
@@ -63,5 +65,5 @@ struct ArtistListItem: View {
                         ]
     )
 
-    ArtistListItem(artist: artist)
+    ArtistListItem(artist: artist) { _ in }
 }

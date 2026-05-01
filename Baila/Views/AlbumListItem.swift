@@ -11,25 +11,46 @@ import SwiftUI
 
 struct AlbumListItem: View {
     let album: Album
+    let onTap: (Album) -> Void
     
     var body : some View {
-        let albumArt =  UIImage(data: album.albumArt)!
-        VStack {
-            Image (uiImage: albumArt)
+        Button {
+            onTap(album)
+        } label: {
+            VStack {
+                albumArtwork
+                Text(album.name)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Text(album.releaseDate, format: .dateTime.year())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .font(Font.body.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.bottom, 16)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var albumArtwork: some View {
+        if let albumArt = UIImage(data: album.albumArt) {
+            Image(uiImage: albumArt)
                 .resizable()
                 .scaledToFit()
                 .clipped()
                 .frame(width: 120, height: 120)
-            Text(album.name)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Text(album.releaseDate, format: .dateTime.year())
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .font(Font.body.monospacedDigit())
-                .foregroundStyle(.secondary)
+        } else {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.tertiary)
+                .overlay {
+                    Image(systemName: "music.note.list")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 120, height: 120)
         }
-        .padding(.bottom,16)
     }
 }
 
@@ -43,5 +64,5 @@ struct AlbumListItem: View {
         CDs: [],
         artist: Artist(name: "Artist", albums: [])
     )
-    AlbumListItem(album: album)
+    AlbumListItem(album: album) { _ in }
 }
