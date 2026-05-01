@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CBBC5A992FA3B27C005FDAEF /* SwiftTaggerID3 in Frameworks */ = {isa = PBXBuildFile; productRef = CBBC5A982FA3B27C005FDAEF /* SwiftTaggerID3 */; };
+		CB8FE9AF2FA4656F00C4B156 /* SwiftTagLib in Frameworks */ = {isa = PBXBuildFile; productRef = CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CBBC5A992FA3B27C005FDAEF /* SwiftTaggerID3 in Frameworks */,
+				CB8FE9AF2FA4656F00C4B156 /* SwiftTagLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = "Jewel Music";
 			packageProductDependencies = (
-				CBBC5A982FA3B27C005FDAEF /* SwiftTaggerID3 */,
+				CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */,
 			);
 			productName = "Jewel Music";
 			productReference = CBBC5A852FA3B12F005FDAEF /* Jewel Music.app */;
@@ -101,7 +101,7 @@
 			mainGroup = CBBC5A7C2FA3B12F005FDAEF;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CBBC5A972FA3B27C005FDAEF /* XCRemoteSwiftPackageReference "SwiftTaggerID3" */,
+				CB8FE9AD2FA4656F00C4B156 /* XCRemoteSwiftPackageReference "SwiftTagLib" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CBBC5A862FA3B12F005FDAEF /* Products */;
@@ -267,7 +267,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Jewel-Music-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Jewel Music";
+				INFOPLIST_KEY_CFBundleDisplayName = Baila;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -275,12 +275,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.github.grasegger.Jewel-Music";
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.grasegger.Baila;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -309,7 +310,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Jewel-Music-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Jewel Music";
+				INFOPLIST_KEY_CFBundleDisplayName = Baila;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -317,12 +318,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.github.grasegger.Jewel-Music";
+				PRODUCT_BUNDLE_IDENTIFIER = com.github.grasegger.Baila;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -363,21 +365,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		CBBC5A972FA3B27C005FDAEF /* XCRemoteSwiftPackageReference "SwiftTaggerID3" */ = {
+		CB8FE9AD2FA4656F00C4B156 /* XCRemoteSwiftPackageReference "SwiftTagLib" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/NCrusher74/SwiftTaggerID3";
+			repositoryURL = "https://github.com/Anywhere-Music-Player/SwiftTagLib.cpp";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.8.1;
+				branch = main;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CBBC5A982FA3B27C005FDAEF /* SwiftTaggerID3 */ = {
+		CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = CBBC5A972FA3B27C005FDAEF /* XCRemoteSwiftPackageReference "SwiftTaggerID3" */;
-			productName = SwiftTaggerID3;
+			package = CB8FE9AD2FA4656F00C4B156 /* XCRemoteSwiftPackageReference "SwiftTagLib" */;
+			productName = SwiftTagLib;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,31 +1,13 @@
 {
-  "originHash" : "b59a7510f1fa3c1133fd6da58cc23a413d51382d4ea7b5fa0643388af8731a1f",
+  "originHash" : "ee5da01ebdb136528a0a94cbfe113b4712fbc714642275c7864b3a4c4f819cf2",
   "pins" : [
     {
-      "identity" : "swiftconvenienceextensions",
+      "identity" : "swifttaglib.cpp",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/NCrusher74/SwiftConvenienceExtensions",
+      "location" : "https://github.com/Anywhere-Music-Player/SwiftTagLib.cpp",
       "state" : {
-        "revision" : "786cf2493e067b2ac154a3c7da5d967ca1ff89f3",
-        "version" : "2.0.9"
-      }
-    },
-    {
-      "identity" : "swiftlanguageandlocalecodes",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/NCrusher74/SwiftLanguageAndLocaleCodes",
-      "state" : {
-        "revision" : "6f3a3fa43e96db0c2e9aecf8a4891e9ba4964b9b",
-        "version" : "2.0.0"
-      }
-    },
-    {
-      "identity" : "swifttaggerid3",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/NCrusher74/SwiftTaggerID3",
-      "state" : {
-        "revision" : "87db0c7a1948454f6b9b44d8ac518878b8346c57",
-        "version" : "1.8.1"
+        "branch" : "main",
+        "revision" : "a9143b160fbf1bad9b4039ce3a6628b9c8da447b"
       }
     }
   ],
