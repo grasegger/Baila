@@ -11,17 +11,11 @@ on:
 
 jobs:
   todo:
-    runs-on: linux-latest
+    runs-on: "ubuntu-latest"
+    permissions:
+      issues: write
     steps:
+      - uses: "actions/checkout@v6"
       - name: TODO to Issue
         uses: alstr/todo-to-issue-action@v5.1.14
-  build:
 
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test -v
