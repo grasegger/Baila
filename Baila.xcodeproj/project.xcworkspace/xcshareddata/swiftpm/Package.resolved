@@ -1,6 +1,15 @@
 {
-  "originHash" : "ee5da01ebdb136528a0a94cbfe113b4712fbc714642275c7864b3a4c4f819cf2",
+  "originHash" : "e40a8787ab8b32f52311840fa80f68959cbbe3367df6b19091cf0555a814a6de",
   "pins" : [
+    {
+      "identity" : "dominantcolors",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DenDmitriev/DominantColors",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a05327d36092c47e9ddc77ce565eb35a5b4a4a6e"
+      }
+    },
     {
       "identity" : "swifttaglib.cpp",
       "kind" : "remoteSourceControl",

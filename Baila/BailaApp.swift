@@ -11,111 +11,83 @@ import SwiftData
 import SwiftUI
 
 extension Logger {
-    private static var subsystem = Bundle.main.bundleIdentifier!
-    static let ui = Logger(subsystem: subsystem, category: "UI")
-    static let background = Logger(subsystem: subsystem, category: "UI")
+  private static var subsystem = Bundle.main.bundleIdentifier!
+  static let ui = Logger(subsystem: subsystem, category: "UI")
+  static let background = Logger(subsystem: subsystem, category: "UI")
 }
 
 @main
-struct BailaApp : App {
-    private let isRunningPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+struct BailaApp: App {
+  private let isRunningPreview =
+    ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+  let sharedModelContainer: ModelContainer
 
-    var sharedModelContainer: ModelContainer = {
-        let isRunningPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
-        let schema = Schema([
-            CachedFile.self,
-            Track.self,
-            CD.self,
-            Album.self,
-            Artist.self,
-            Playlist.self,
-        ])
-        let modelConfiguration = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: isRunningPreview
-        )
+  init() {
+    guard !isRunningPreview else {
+      sharedModelContainer = Self.makeModelContainer(isStoredInMemoryOnly: true)
+      return
+    }
+      
+#if targetEnvironment(simulator)
+     Self.deleteSwiftDataStore()
+#endif
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    sharedModelContainer = Self.makeModelContainer(isStoredInMemoryOnly: false)
 
-    init() {
-        guard !isRunningPreview else {
-            return
-        }
-
-        do {
-            try AppFiles.ensureAppFolderExists()
-            AppFiles.ensurePlaceholderFile()
-        } catch {
-            Logger.ui.error("Failed to create app folder: \(error.localizedDescription)")
-        }
-        ensurePlaylistExists(modelContainer: sharedModelContainer)
-        BailaApp.registerBackgroundTask(modelContainer: sharedModelContainer)
-        BailaApp.scheduleAppRefreshStatic()
+    do {
+      try AppFiles.ensureAppFolderExists()
+    } catch {
+      Logger.ui.error("Failed to create app folder: \(error.localizedDescription)")
     }
 
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .modelContainer(sharedModelContainer)
-                .task {
-                    guard !isRunningPreview else {
-                        return
-                    }
+    PlaybackController.shared.configure(modelContainer: sharedModelContainer)
+    TagReaderService.shared.configure(modelContainer: sharedModelContainer)
+  }
+ 
+  private static func makeModelContainer(isStoredInMemoryOnly: Bool) -> ModelContainer {
+    let schema = Schema([
+      CachedFile.self,
+      Track.self,
+      CD.self,
+      Album.self,
+      Artist.self,
+      PlaylistPosition.self,
+    ])
+    let modelConfiguration = ModelConfiguration(
+      schema: schema,
+      isStoredInMemoryOnly: isStoredInMemoryOnly
+    )
 
-                    await scanAndPersistMusicFiles(modelContainer: sharedModelContainer)
-                }
-        }
+    do {
+      return try ModelContainer(for: schema, configurations: [modelConfiguration])
+    } catch {
+      fatalError("Could not create ModelContainer: \(error)")
     }
+  }
 
-    private func scanAndPersistMusicFiles(modelContainer: ModelContainer) async {
-        do {
-            try await TagReader.scanAndPersistMusicFilesStatic(modelContainer: modelContainer)
-        } catch {
-            Logger.background.error("Error importing music files")
-        }
+  private static func deleteSwiftDataStore() {
+    let fileManager = FileManager.default
+    guard let url = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+
+    let databaseFiles = ["default.store", "default.store-shm", "default.store-wal"]
+
+    for fileName in databaseFiles {
+      let fileURL = url.appendingPathComponent(fileName)
+      guard fileManager.fileExists(atPath: fileURL.path) else { continue }
+
+      do {
+        try fileManager.removeItem(at: fileURL)
+        Logger.ui.debug("Deleted SwiftData store file: \(fileName)")
+      } catch {
+        Logger.ui.error("Failed to delete SwiftData store file \(fileName): \(error.localizedDescription)")
+      }
     }
-
-    static func registerBackgroundTask(modelContainer: ModelContainer) {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.github.grasegger.Baila.backgroundrefresh", using: nil) { task in
-            Task {
-                do {
-                    try await TagReader.scanAndPersistMusicFilesStatic(modelContainer: modelContainer)
-                } catch {
-                    Logger.background.error("Error importing music files")
-                }
-                    task.setTaskCompleted(success: true)
-                    scheduleAppRefreshStatic()
-            }
-        }
+  }
+  var body: some Scene {
+    WindowGroup {
+      MainView()
+        .modelContainer(sharedModelContainer)
     }
+  }
 
-    static func scheduleAppRefreshStatic() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.github.grasegger.Baila.backgroundrefresh")
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 60 * 60) // 1 hour
-        try? BGTaskScheduler.shared.submit(request)
-    }
-
-    private func ensurePlaylistExists(modelContainer: ModelContainer) {
-        let context = ModelContext(modelContainer)
-        let singletonID = Playlist.defaultSingletonID
-        let descriptor = FetchDescriptor<Playlist>(
-            predicate: #Predicate { $0.singletonID == singletonID }
-        )
-
-        do {
-            let playlist = try context.fetch(descriptor)
-
-            if playlist.isEmpty {
-                context.insert(Playlist())
-                try context.save()
-            }
-        } catch {
-            Logger.ui.error("Failed to ensure playlist exists: \(error.localizedDescription)")
-        }
-    }
 }

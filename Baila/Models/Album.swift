@@ -7,22 +7,169 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
+import UIKit
 
 @Model
 class Album {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var releaseDate: Date
-    @Attribute(.unique) var albumArt: Data
+  @Attribute(.unique) var id: UUID
+  var name: String
+  var releaseDate: Date
+  @Attribute(.externalStorage) var albumArt: Data?
+  @Attribute(.externalStorage) var albumBackground: Data?
+  var albumBackgroundStyleVersion: Int
+  var dominantColorHex: String?
+  var dominantColorHexes: [String]
+  var artist: Artist?
+    var type: String?
     @Relationship(deleteRule: .cascade, inverse: \CD.album) var CDs: [CD]
-    var artist: Artist?
 
-    init(id: UUID = UUID(), name: String, releaseDate: Date, albumArt: Data, CDs: [CD], artist: Artist?) {
-        self.id = id
-        self.name = name
-        self.releaseDate = releaseDate
-        self.albumArt = albumArt
-        self.CDs = CDs
-        self.artist = artist
+  init(
+    id: UUID = UUID(),
+    name: String,
+    releaseDate: Date,
+    albumArt: Data?,
+    albumBackground: Data? = nil,
+    albumBackgroundStyleVersion: Int = 0,
+    dominantColorHex: String? = nil,
+    dominantColorHexes: [String] = [],
+    CDs: [CD],
+    artist: Artist?,
+    type: String? = nil
+  ) {
+    self.id = id
+    self.name = name
+    self.releaseDate = releaseDate
+    self.albumArt = albumArt
+    self.albumBackground = albumBackground
+    self.albumBackgroundStyleVersion = albumBackgroundStyleVersion
+    self.dominantColorHex = dominantColorHex ?? dominantColorHexes.first
+    self.dominantColorHexes = dominantColorHexes
+    self.CDs = CDs
+    self.artist = artist
+      self.type = type
+  }
+
+  var sortedCDs: [CD] {
+    CDs.sorted { $0.number < $1.number }
+  }
+  var allTracksSorted: [Track] {
+    sortedCDs.flatMap { cd in
+      cd.sortedTracks
     }
+  }
+
+  var runtime: TimeInterval {
+    CDs.reduce(into: .zero) { partialResult, cd in
+      partialResult += cd.runtime
+    }
+  }
+
+  var releaseYear: String {
+    String(Calendar.current.component(.year, from: releaseDate))
+  }
+
+  var artworkImage: UIImage? {
+    if let albumArt,
+       let image = UIImage(data: albumArt) {
+      return image
+    }
+
+    return UIImage(named: "missing_album_art")
+  }
+
+  var backgroundImage: UIImage? {
+    guard let albumBackground else { return nil }
+    return UIImage(data: albumBackground)
+  }
+
+  static func makeSortDescriptors(sortByReleaseDate: Bool, ascending: Bool) -> [SortDescriptor<Album>] {
+    let order: SortOrder = ascending ? .forward : .reverse
+
+    if sortByReleaseDate {
+      return [
+        SortDescriptor(\Album.releaseDate, order: order),
+        SortDescriptor(\Album.name, comparator: .localizedStandard, order: order),
+      ]
+    } else {
+      return [
+        SortDescriptor(\Album.name, comparator: .localizedStandard, order: order),
+        SortDescriptor(\Album.releaseDate, order: order),
+      ]
+    }
+  }
+
+  static func getOrCreate(
+    name: String?,
+    by artist: Artist,
+    on releaseDateString: String?,
+    image: Data?,
+    background: Data? = nil,
+    backgroundStyleVersion: Int = 0,
+    dominantColorHex: String? = nil,
+    dominantColorHexes: [String] = [],
+    context: ModelContext
+  ) throws -> Album {
+    let name = name ?? "Unknown Album"
+    var releaseDate = Date.distantPast
+
+    if let releaseDateString,
+       let parsed = try? Date(
+         releaseDateString,
+         strategy: .iso8601.year().month().day()
+       ) {
+      releaseDate = parsed
+    }
+    
+      if let releaseDateString,
+         let parsed = try? Date(
+            releaseDateString,
+            strategy: .iso8601.year()
+         ) {
+          releaseDate = parsed
+      }
+
+    let descriptor = FetchDescriptor<Album>(predicate: #Predicate { $0.name == name })
+    let results = try context.fetch(descriptor)
+
+    let filtered = results.filter { album in
+      if let albumArtist = album.artist {
+        return albumArtist.persistentModelID == artist.persistentModelID
+      } else {
+        return false
+      }
+    }
+
+    if let album = filtered.first {
+      if album.albumArt == nil, let image {
+        album.albumArt = image
+      }
+      if let background {
+        album.albumBackground = background
+        album.albumBackgroundStyleVersion = backgroundStyleVersion
+      }
+      if album.dominantColorHex == nil {
+        album.dominantColorHex = dominantColorHex ?? dominantColorHexes.first
+      }
+      if album.dominantColorHexes.isEmpty {
+        album.dominantColorHexes = dominantColorHexes
+      }
+      return album
+    }
+
+    let album = Album(
+      name: name,
+      releaseDate: releaseDate,
+      albumArt: image,
+      albumBackground: background,
+      albumBackgroundStyleVersion: backgroundStyleVersion,
+      dominantColorHex: dominantColorHex,
+      dominantColorHexes: dominantColorHexes,
+      CDs: [],
+      artist: artist
+    )
+
+    context.insert(album)
+    return album
+  }
 }

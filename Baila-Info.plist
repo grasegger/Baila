@@ -6,6 +6,12 @@
 	<array>
 		<string>com.github.grasegger.Baila.backgroundrefresh</string>
 	</array>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Doto-VariableFont_ROND,wght.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
