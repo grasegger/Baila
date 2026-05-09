@@ -29,11 +29,19 @@ final class PlaybackController  {
     private var timeControlObserver: NSKeyValueObservation?
     private var currentItemObserver: NSKeyValueObservation?
     private var playerItemEndObserver: NSObjectProtocol?
+    private var periodicTimeObserver: Any?
     private var queuedPositionsByItemID: [ObjectIdentifier: PlaylistPosition] = [:]
     private var currentAsset : AVPlayerItem? = nil
     
     var playing = false
     var loopMode = PlaylistLoopMode.off
+    var currentTime: TimeInterval = 0
+    var duration: TimeInterval = 0
+    
+    var progress: Double {
+        guard duration > 0 else { return 0 }
+        return min(max(currentTime / duration, 0), 1)
+    }
     
     var currentPosition: PlaylistPosition?
     
@@ -62,24 +70,10 @@ final class PlaybackController  {
     
     init () {
         timeControlObserver = avp.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
-            Task { @MainActor in
-                let playable = player.currentItem?.status == .readyToPlay
+            let controller = self
             
-                DispatchQueue.main.async {
-                    self?.playable = playable
-                }
-                
-                if playable {
-                    let isPlaying = player.timeControlStatus == .playing
-                    DispatchQueue.main.async {
-                        self?.playing = isPlaying
-                    }
-                } else {
-                    DispatchQueue.main.async {
-                        self?.playing = playable
-                    }
-                }
-                
+            Task { @MainActor in
+                controller?.syncPlaybackState()
             }
         }
         
@@ -102,6 +96,17 @@ final class PlaybackController  {
             Task { @MainActor in
                 await Task.yield()
                 controller?.syncCurrentPosition(with: controller?.avp.currentItem)
+            }
+        }
+        
+        periodicTimeObserver = avp.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] _ in
+            let controller = self
+            
+            Task { @MainActor in
+                controller?.syncPlaybackTime()
             }
         }
     }
@@ -190,6 +195,8 @@ final class PlaybackController  {
         currentPosition = nil
         playing = false
         playable = false
+        currentTime = 0
+        duration = 0
         
         for position in playlist {
             modelContainer.mainContext.delete(position)
@@ -215,6 +222,7 @@ final class PlaybackController  {
             avp.advanceToNextItem()
             syncCurrentPosition(with: avp.currentItem)
             avp.play()
+            playing = true
         } else {
             play(next)
         }
@@ -230,10 +238,12 @@ final class PlaybackController  {
     }
     
     func playPause() {
-        if avp.timeControlStatus == .playing {
+        if playing {
             avp.pause()
+            playing = false
         } else {
             avp.play()
+            playing = true
         }
     }
     
@@ -252,6 +262,7 @@ final class PlaybackController  {
     
     func pause() {
         avp.pause()
+        playing = false
     }
     
     private func play(_ position: PlaylistPosition) {
@@ -273,6 +284,7 @@ final class PlaybackController  {
         }
         
         avp.play()
+        playing = true
     }
     
     private func nextPosition() -> PlaylistPosition? {
@@ -383,8 +395,33 @@ final class PlaybackController  {
             currentPosition = position
         }
         
+        syncPlaybackTime()
         removeStaleQueuedPositions()
         queueNextItemIfNeeded()
+        syncPlaybackState()
+    }
+    
+    private func syncPlaybackTime() {
+        let seconds = avp.currentTime().seconds
+        
+        if seconds.isFinite {
+            currentTime = max(0, seconds)
+        } else {
+            currentTime = 0
+        }
+        
+        if let durationSeconds = avp.currentItem?.duration.seconds,
+           durationSeconds.isFinite,
+           durationSeconds > 0 {
+            duration = durationSeconds
+        } else {
+            duration = currentTrack?.runtime ?? 0
+        }
+    }
+    
+    private func syncPlaybackState() {
+        playable = avp.currentItem != nil
+        playing = avp.timeControlStatus != .paused && playable
     }
     
     private func removeStaleQueuedPositions() {

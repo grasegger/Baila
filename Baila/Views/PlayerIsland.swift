@@ -55,10 +55,17 @@ struct PlayerIsland: View {
     }
 
     private var runtime: String {
-        guard let runtime = player.currentTrack?.runtime else {
-            return "--:--"
-        }
-        let totalSeconds = max(0, Int(runtime.rounded()))
+        formattedTime(player.duration)
+    }
+    
+    private var currentTime: String {
+        formattedTime(player.currentTime)
+    }
+    
+    private func formattedTime(_ time: TimeInterval) -> String {
+        guard time.isFinite, time > 0 else { return "0:00" }
+        
+        let totalSeconds = max(0, Int(time.rounded()))
         return String(format: "%d:%02d", totalSeconds / 60, totalSeconds % 60)
     }
 
@@ -193,16 +200,17 @@ struct PlayerIsland: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .center)))
                 
                 HStack(spacing: 18) {
-                    // todo read time from media live
-                    Text("1:23")
+                    Text(currentTime)
+                        .monospacedDigit()
                     ProgressView(
-                        value: 55,
-                        total: 100
+                        value: player.progress,
+                        total: 1
                     )
                     .progressViewStyle(.linear)
-                    Text("\(runtime)")
+                    Text(runtime)
+                        .monospacedDigit()
                 }
-                .foregroundStyle(Color.white.opacity(0.8))
+                .foregroundStyle(Color.white.opacity(0.4))
                 
                 HStack(spacing: 18) {
                     Button {
