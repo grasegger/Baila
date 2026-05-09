@@ -66,43 +66,6 @@ struct MainView: View {
         }
     }
     
-    var playerControls: some ToolbarContent {
-        ToolbarItemGroup(placement: .bottomBar) {
-            
-            Button {
-                player.stop()
-            } label: {
-                Image(systemName: "stop.fill")
-            }
-            .disabled(!player.playing)
-            
-            Button {
-                player.prev()
-            } label: {
-                Image(systemName: "backward.fill")
-            }
-            .disabled(!player.hasPreviousTrack)
-            Button {
-                player.playPause()
-            } label: {
-                Image(systemName: player.playing ? "pause.fill" : "play.fill")
-            }
-            
-            Button {
-                player.next()
-            } label: {
-                Image(systemName: "forward.fill")
-            }
-            .disabled(!player.hasNextTrack)
-            
-            Button {
-                // todo loop mode
-            } label: {
-                Image(systemName: "repeat")
-            }
-        }
-    }
-    
     private var settingsMenu: some View {
         Menu {
             LibraryScanMenu()

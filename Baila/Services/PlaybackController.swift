@@ -169,17 +169,6 @@ final class PlaybackController  {
         if let firstPosition = playlist.first {
             play(firstPosition)
         }
-        // todo add to player queue - maybe we dont even need to hold the state in the end? :) just wondering how we would sync the now playing
-        
-        /*
-         player.stop(clearQueue: true)
-         
-         for track in tracks {
-         if let  path = track.file?.filePath {
-         player.queue(url: path)
-         }
-         }
-         */
     }
     
     func stop() {
