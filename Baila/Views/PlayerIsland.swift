@@ -34,6 +34,9 @@ struct PlayerIsland: View {
     @Binding var visibleAlbumId : PersistentIdentifier?
     let forceExpanded: Bool
     var onArtworkTap : () -> Void
+    
+    @State private var artworkImage: UIImage?
+    @State private var suppressNextArtworkTap = false
 
     init(
         isExpanded: Binding<Bool>,
@@ -60,28 +63,58 @@ struct PlayerIsland: View {
     }
 
     @ViewBuilder
-    private func artworkImage(size: CGFloat, cornerRadius: CGFloat) -> some View {
-        if let image = player.currentTrack?.CD?.album?.artworkImage ?? UIImage(
-            named: "missing_album_art"
-        ) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: size, height: size)
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: cornerRadius,
-                            style: .continuous
-                        )
-                    )
-                    .overlay {
-                        RoundedRectangle(
-                            cornerRadius: cornerRadius,
-                            style: .continuous
-                        )
+    private func artworkImage(cornerRadius: CGFloat) -> some View {
+        if let image = artworkImage ?? UIImage(named: "missing_album_art") {
+            let shape = RoundedRectangle(
+                cornerRadius: cornerRadius,
+                style: .continuous
+            )
+            
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .clipped()
+                .clipShape(shape)
+                .overlay {
+                    shape
                         .stroke(.separator, lineWidth: 1)
+                }
+                .contentShape(shape)
+                .onTapGesture {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(40))
+                        
+                        guard suppressNextArtworkTap == false else {
+                            suppressNextArtworkTap = false
+                            return
+                        }
+                        
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        player.playPause()
                     }
+                }
         }
+    }
+    
+    @ViewBuilder
+    private var artwork: some View {
+        if showsDetails && !sameAlbum {
+            artworkImage(cornerRadius: 36)
+                .aspectRatio(1, contentMode: .fit)
+                .frame(maxWidth: .infinity)
+                .transition(
+                    .opacity.combined(
+                        with: .scale(scale: 0.96, anchor: .center)
+                    )
+                )
+        } else if !showsDetails {
+            artworkImage(cornerRadius: 36)
+                .frame(width: 48, height: 48)
+        }
+    }
+    
+    private func refreshArtworkImage() {
+        artworkImage = player.currentTrack?.CD?.album?.artworkImage
     }
     
     var sameAlbum : Bool {
@@ -91,55 +124,74 @@ struct PlayerIsland: View {
             return false
         }
     }
-
+    @State private var loopMode = PlaylistLoopMode.off
+    
+    private func advanceLoop() {
+        switch loopMode {
+        case .off:
+            loopMode = PlaylistLoopMode.one
+        case .one:
+            loopMode = PlaylistLoopMode.all
+        case .all:
+            loopMode = PlaylistLoopMode.off
+        }
+        
+        player.setLoopMode(loopMode)
+    }
+    
+    @ViewBuilder
+    var loopModeIcon : some View {
+        switch loopMode {
+        case .off:
+            Image(systemName: "repeat")
+                .frame(width: 32, height: 32)
+                .foregroundStyle(.secondary)
+        case .all:
+            Image(systemName: "repeat").frame(width: 32, height: 32)
+        case .one:
+            Image(systemName: "repeat.1").frame(width: 32, height: 32)
+        }
+    }
+    
     var body: some View {
         VStack(spacing: showsDetails ? 12 : 0) {
-            if showsDetails && (!sameAlbum && !forceExpanded) {
-                    GeometryReader { proxy in
-                        HStack {
-                            artworkImage(size: 320, cornerRadius: 36)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .frame(height: 320)
-                }
-                
-
-            HStack(spacing: showsDetails ? 10 : 0) {
-                if !showsDetails {
-                    Button {
-                        player.playPause()
-                    } label: {
-                        artworkImage(size: 48, cornerRadius: 200)
-                    }
-                }
-            }
+            artwork
+                .animation(Self.spring, value: showsDetails)
+                .animation(Self.spring, value: sameAlbum)
+            
             if showsDetails {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(player.currentTrack?.name ?? "Not Playing")
-                        .font(.subheadline.weight(.bold))
-                        .lineLimit(1)
-                        .foregroundStyle(Color.white)
-                    if !sameAlbum {
-                        Text(
-                            "\(player.currentTrack?.CD?.album?.name ?? "---")"
-                        )
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
-                        .foregroundStyle(Color.white)
-                        .opacity(0.7)
-                        Text(
-                            player.currentTrack?.artist ?? player.currentTrack?.CD?.album?.artist?.name ?? "---"
-                        )
-                        .font(.caption)
-                        .lineLimit(1)
-                        .foregroundStyle(Color.white)
-                        .opacity(0.6)
+                HStack {
+                    if sameAlbum {
+                        Spacer()
                     }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(player.currentTrack?.name ?? "Not Playing")
+                            .font(.subheadline.weight(.bold))
+                            .lineLimit(1)
+                            .foregroundStyle(Color.white)
+                        if !sameAlbum {
+                            Text(
+                                "\(player.currentTrack?.CD?.album?.name ?? "---")"
+                            )
+                            .font(.caption.weight(.semibold))
+                            .lineLimit(1)
+                            .foregroundStyle(Color.white)
+                            .opacity(0.7)
+                            Text(
+                                player.currentTrack?.artist ?? player.currentTrack?.CD?.album?.artist?.name ?? "---"
+                            )
+                            .font(.caption)
+                            .lineLimit(1)
+                            .foregroundStyle(Color.white)
+                            .opacity(0.6)
+                        }
+                    }
+                    Spacer()
                 }
-                .padding(.top, (sameAlbum || forceExpanded) ? 8 : 0)
-                .frame(width: 320, alignment: .leading)
+                .padding(.top, (sameAlbum || forceExpanded) ? 16 : 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .center)))
+                
                 HStack(spacing: 18) {
                     // todo read time from media live
                     Text("1:23")
@@ -151,13 +203,12 @@ struct PlayerIsland: View {
                     Text("\(runtime)")
                 }
                 .foregroundStyle(Color.white.opacity(0.8))
-
+                
                 HStack(spacing: 18) {
                     Button {
-                        // todo
+                        advanceLoop()
                     } label: {
-                        Image(systemName: "repeat")
-                            .frame(width: 32, height: 32)
+                        loopModeIcon
                     }
                     Button {
                         player.prev()
@@ -165,24 +216,24 @@ struct PlayerIsland: View {
                         Image(systemName: "backward.end.fill")
                             .frame(width: 32, height: 32)
                     }
-                    .disabled(player.currentPosition?.hasPrev ?? false)
-
+                    .disabled(!player.hasPreviousTrack)
+                    
                     Button {
                         player.playPause()
                     } label: {
                         Image(
                             systemName: player.playing ? "pause.fill" : "play.fill"
                         )
-                            .frame(width: 32, height: 32)
+                        .frame(width: 32, height: 32)
                     }
-
+                    
                     Button {
                         player.next()
                     } label: {
                         Image(systemName: "forward.end.fill")
                             .frame(width: 32, height: 32)
                     }
-                    .disabled(player.currentPosition?.hasNext ?? false)
+                    .disabled(!player.hasNextTrack)
                     
                     if sameAlbum {
                         Button {
@@ -200,19 +251,19 @@ struct PlayerIsland: View {
                         }
                     }
                 }
-                .foregroundStyle(Color.white)
+                .tint(.white)
                 
             }
         }
         .padding(.horizontal, showsDetails ? 14 : 0)
         .padding(.top, showsDetails ? 14 : 0)
         .padding(.bottom, showsDetails ? 24 : 0)
-        .frame(maxWidth: showsDetails ? .infinity : 48, minHeight: showsDetails ? 76 : 48)
+        .frame(maxWidth: showsDetails ? .infinity : 48, minHeight: 48)
         .background(Color.black)
         .clipShape(RoundedRectangle(cornerRadius: showsDetails ? 46 : 28, style: .continuous))
-        .padding(.horizontal, showsDetails ? 12 : 0)
-        .padding(.vertical, 16)
-        .offset(y: showsDetails ? 36 : 22)
+        .padding(.horizontal, showsDetails ? 10 : 0)
+        .padding(.vertical, 10)
+        .offset(y: showsDetails ? 36 : 16)
         .zIndex(1)
         .shadow(
             color: Color.black.opacity(0.4),
@@ -222,6 +273,7 @@ struct PlayerIsland: View {
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.35).onEnded { _ in
                 guard forceExpanded == false else { return }
+                suppressNextArtworkTap = true
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 withAnimation(Self.spring) {
                     isExpanded.toggle()
@@ -229,32 +281,42 @@ struct PlayerIsland: View {
             }
         )
         .simultaneousGesture(
-            DragGesture(minimumDistance: 16).onEnded { value in
+            DragGesture(minimumDistance: 16)
+                .onChanged { _ in
+                    suppressNextArtworkTap = true
+                }
+                .onEnded { value in
                 guard forceExpanded == false else { return }
                 guard isExpanded else { return }
-                guard value.translation.height > 24,
-                      abs(value.translation.height) > abs(value.translation.width) else { return }
-
+                guard value.translation.height > 24 else { return }
+                
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 withAnimation(Self.spring) {
                     isExpanded = false
                 }
-            }
+                }
         )
         .animation(Self.spring, value: showsDetails)
+        .animation(Self.spring, value: sameAlbum)
+        .onAppear {
+            refreshArtworkImage()
+        }
+        .onChange(of: player.currentTrack?.id) {
+            refreshArtworkImage()
+        }
     }
 }
 
 #Preview {
     let container = Utils.previewContainer
-
+    
     VStack(spacing: 32) {
         PlayerIsland(
             isExpanded: .constant(false),
             visibleAlbumId: .constant(nil),
             onArtworkTap: {},
         )
-
+        
         PlayerIsland(
             isExpanded: .constant(false),
             visibleAlbumId: .constant(nil),

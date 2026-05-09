@@ -7,13 +7,44 @@
 
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct AlbumPane: View {
     let album: Album
     @Binding var currentAlbumId : PersistentIdentifier?
+    @Binding var partiallyVisibleAlbumId: PersistentIdentifier?
     
     let onPaneTap: () -> Void
     let onPlay: (Album) -> Void
+    
+    @State private var artworkImage: UIImage?
+    @State private var backgroundImage: UIImage?
+    
+    init(
+        album: Album,
+        currentAlbumId: Binding<PersistentIdentifier?>,
+        partiallyVisibleAlbumId: Binding<PersistentIdentifier?>,
+        onPaneTap: @escaping () -> Void,
+        onPlay: @escaping (Album) -> Void
+    ) {
+        self.album = album
+        self._currentAlbumId = currentAlbumId
+        self._partiallyVisibleAlbumId = partiallyVisibleAlbumId
+        self.onPaneTap = onPaneTap
+        self.onPlay = onPlay
+        self._artworkImage = State(initialValue: nil)
+        self._backgroundImage = State(initialValue: nil)
+    }
+    
+    private func loadImagesIfNeeded() {
+        if artworkImage == nil {
+            artworkImage = album.artworkImage
+        }
+        
+        if backgroundImage == nil {
+            backgroundImage = album.backgroundImage
+        }
+    }
 
     var body: some View {
         GeometryReader { proxy in
@@ -27,7 +58,7 @@ struct AlbumPane: View {
             let cardShape = RoundedRectangle(cornerRadius: 12, style: .continuous)
 
             VStack(alignment: .center, spacing: 0) {
-                if let image = album.artworkImage {
+                if let image = artworkImage {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -35,6 +66,7 @@ struct AlbumPane: View {
                         .cornerRadius(12 - 5)
                         .clipped()
                         .onTapGesture {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                             onPlay(album)
                         }
                         .padding(5)
@@ -60,7 +92,7 @@ struct AlbumPane: View {
                         .font(.system(size: fontSize * 3))
                         .foregroundStyle(.tertiary)
                 }
-                .padding(.all)
+                .padding(10)
                 .frame(width: coverSize)
             }
             .background(.thickMaterial)
@@ -68,7 +100,7 @@ struct AlbumPane: View {
             .shadow(color: .black.opacity(0.2), radius: 16)
             .frame(width: proxy.size.width, height: proxy.size.height)
             .background {
-                if let image = album.backgroundImage {
+                if let image = backgroundImage {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
@@ -82,10 +114,18 @@ struct AlbumPane: View {
             .onTapGesture {
                 onPaneTap()
             }
-            .onScrollVisibilityChange(threshold: 0.5) { isVisible in
-                if isVisible {
+            .onScrollVisibilityChange(threshold: 0.9) { isVisible in
+                if isVisible && currentAlbumId != album.persistentModelID {
                     currentAlbumId = album.persistentModelID
                 }
+            }
+            .onScrollVisibilityChange(threshold: 0.1) { isVisible in
+                if isVisible && partiallyVisibleAlbumId != album.persistentModelID {
+                    partiallyVisibleAlbumId = album.persistentModelID
+                }
+            }
+            .onAppear {
+                loadImagesIfNeeded()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -101,6 +141,7 @@ struct AlbumPane: View {
         AlbumPane(
             album: album,
             currentAlbumId: .constant(nil),
+            partiallyVisibleAlbumId: .constant(nil),
             onPaneTap: {
             },
             onPlay: {_ in }

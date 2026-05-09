@@ -27,9 +27,13 @@ final class PlaybackController  {
     private var avp = AVQueuePlayer()
     private var playlist: [PlaylistPosition] = []
     private var timeControlObserver: NSKeyValueObservation?
+    private var currentItemObserver: NSKeyValueObservation?
+    private var playerItemEndObserver: NSObjectProtocol?
+    private var queuedPositionsByItemID: [ObjectIdentifier: PlaylistPosition] = [:]
     private var currentAsset : AVPlayerItem? = nil
     
     var playing = false
+    var loopMode = PlaylistLoopMode.off
     
     var currentPosition: PlaylistPosition?
     
@@ -39,7 +43,22 @@ final class PlaybackController  {
         return track
     }
     
+    var hasNextTrack: Bool {
+        nextPosition() != nil
+    }
+    
+    var hasPreviousTrack: Bool {
+        previousPosition() != nil
+    }
+    
     var playable = false
+    
+    func setLoopMode(_ loopMode: PlaylistLoopMode) {
+        guard self.loopMode != loopMode else { return }
+        
+        self.loopMode = loopMode
+        updateLookaheadQueue()
+    }
     
     init () {
         timeControlObserver = avp.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
@@ -61,6 +80,28 @@ final class PlaybackController  {
                     }
                 }
                 
+            }
+        }
+        
+        currentItemObserver = avp.observe(\.currentItem, options: [.new]) { [weak self] player, _ in
+            let controller = self
+            let currentItem = player.currentItem
+            
+            Task { @MainActor in
+                controller?.syncCurrentPosition(with: currentItem)
+            }
+        }
+        
+        playerItemEndObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            let controller = self
+            
+            Task { @MainActor in
+                await Task.yield()
+                controller?.syncCurrentPosition(with: controller?.avp.currentItem)
             }
         }
     }
@@ -144,9 +185,11 @@ final class PlaybackController  {
         
         avp.pause()
         avp.removeAllItems()
+        queuedPositionsByItemID = [:]
         currentAsset = nil
         currentPosition = nil
         playing = false
+        playable = false
         
         for position in playlist {
             modelContainer.mainContext.delete(position)
@@ -165,21 +208,25 @@ final class PlaybackController  {
     }
     
     func next() {
-        guard let next = currentPosition?.next() else { return }
-        play(next)
+        guard let currentPosition,
+              let next = nextPosition(after: currentPosition, for: .manual) else { return }
+        
+        if queuedPosition(for: next) != nil {
+            avp.advanceToNextItem()
+            syncCurrentPosition(with: avp.currentItem)
+            avp.play()
+        } else {
+            play(next)
+        }
     }
     
     func prev() {
-        guard let prev = currentPosition?.prev() else { return }
+        guard let prev = previousPosition() else { return }
         play(prev)
     }
     
     var hasCurrentTrack : Bool {
-        if let _ = currentPosition {
-            return true
-        } else {
-            return true
-        }
+        currentTrack != nil
     }
     
     func playPause() {
@@ -208,19 +255,168 @@ final class PlaybackController  {
     }
     
     private func play(_ position: PlaylistPosition) {
-        guard let url = position.track?.file?.filePath else {
-            Logger.player.error("Cannot play playlist position without a cached file")
-            return
-        }
-        
         guard prepareAudioSession() else { return }
         
-        let asset = AVPlayerItem(asset: AVURLAsset(url: url))
         avp.removeAllItems()
+        queuedPositionsByItemID = [:]
+        
+        guard let asset = makePlayerItem(for: position) else { return }
+        
         avp.insert(asset, after: nil)
         currentPosition = position
         currentAsset = asset
+        playable = true
+        
+        if let nextPosition = nextPosition(after: position, for: .automatic),
+           let nextAsset = makePlayerItem(for: nextPosition) {
+            avp.insert(nextAsset, after: nil)
+        }
+        
         avp.play()
+    }
+    
+    private func nextPosition() -> PlaylistPosition? {
+        guard let currentPosition else { return nil }
+        return nextPosition(after: currentPosition, for: .manual)
+    }
+    
+    private func previousPosition() -> PlaylistPosition? {
+        guard let currentPosition else { return nil }
+        
+        if let previous = adjacentPosition(from: currentPosition, step: -1) {
+            return previous
+        }
+        
+        guard loopMode == .all else {
+            return nil
+        }
+        
+        return lastPlayablePosition()
+    }
+    
+    private enum AdvanceReason {
+        case manual
+        case automatic
+    }
+    
+    private func nextPosition(after position: PlaylistPosition, for reason: AdvanceReason) -> PlaylistPosition? {
+        if loopMode == .one && reason == .automatic {
+            return position
+        }
+        
+        if let next = adjacentPosition(from: position, step: 1) {
+            return next
+        }
+        
+        guard loopMode == .all else {
+            return nil
+        }
+        
+        return firstPlayablePosition()
+    }
+    
+    private func adjacentPosition(from position: PlaylistPosition, step: Int) -> PlaylistPosition? {
+        guard step != 0 else { return nil }
+        
+        guard let currentIndex = playlist.firstIndex(where: { $0.id == position.id }) else {
+            return nil
+        }
+        
+        var nextIndex = currentIndex + step
+        
+        while playlist.indices.contains(nextIndex) {
+            let position = playlist[nextIndex]
+            
+            if position.track?.file?.filePath != nil {
+                return position
+            }
+            
+            nextIndex += step
+        }
+        
+        return nil
+    }
+    
+    private func firstPlayablePosition() -> PlaylistPosition? {
+        playlist.first { $0.track?.file?.filePath != nil }
+    }
+    
+    private func lastPlayablePosition() -> PlaylistPosition? {
+        playlist.last { $0.track?.file?.filePath != nil }
+    }
+    
+    private func makePlayerItem(for position: PlaylistPosition) -> AVPlayerItem? {
+        guard let url = position.track?.file?.filePath else {
+            Logger.player.error("Cannot queue playlist position without a cached file")
+            return nil
+        }
+        
+        let item = AVPlayerItem(asset: AVURLAsset(url: url))
+        queuedPositionsByItemID[ObjectIdentifier(item)] = position
+        return item
+    }
+    
+    private func queuedPosition(for position: PlaylistPosition) -> PlaylistPosition? {
+        let currentItemID = avp.currentItem.map { ObjectIdentifier($0) }
+        
+        return avp.items()
+            .filter { ObjectIdentifier($0) != currentItemID }
+            .compactMap { queuedPositionsByItemID[ObjectIdentifier($0)] }
+            .first { $0.id == position.id }
+    }
+    
+    private func syncCurrentPosition(with item: AVPlayerItem?) {
+        guard let item else {
+            currentAsset = nil
+            
+            if avp.items().isEmpty {
+                playing = false
+                playable = false
+            }
+            
+            return
+        }
+        
+        currentAsset = item
+        
+        if let position = queuedPositionsByItemID[ObjectIdentifier(item)] {
+            currentPosition = position
+        }
+        
+        removeStaleQueuedPositions()
+        queueNextItemIfNeeded()
+    }
+    
+    private func removeStaleQueuedPositions() {
+        let queuedItemIDs = Set(avp.items().map { ObjectIdentifier($0) })
+        queuedPositionsByItemID = queuedPositionsByItemID.filter { queuedItemIDs.contains($0.key) }
+    }
+    
+    private func queueNextItemIfNeeded() {
+        guard let currentPosition,
+              let next = nextPosition(after: currentPosition, for: .automatic),
+              queuedPosition(for: next) == nil,
+              let nextAsset = makePlayerItem(for: next) else {
+            return
+        }
+        
+        avp.insert(nextAsset, after: nil)
+    }
+    
+    private func updateLookaheadQueue() {
+        let currentItem = avp.currentItem
+        
+        for item in avp.items() where item !== currentItem {
+            avp.remove(item)
+            queuedPositionsByItemID[ObjectIdentifier(item)] = nil
+        }
+        
+        if let currentItem,
+           let currentPosition {
+            queuedPositionsByItemID[ObjectIdentifier(currentItem)] = currentPosition
+        }
+        
+        queueNextItemIfNeeded()
     }
     
 }

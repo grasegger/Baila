@@ -31,13 +31,14 @@ struct MainView: View {
     @State private var isSearchPresented = false
     @State private var didLongPressPlayerButton = false
     @State private var playerIslandExpanded = false
-    @State private var isAlbumScrollActive = false
+    @State private var isScrollingToCurrentAlbum = false
     @State private var visibleAblumId : PersistentIdentifier?
+    @State private var partiallyVisibleAlbumId: PersistentIdentifier?
     
     @Namespace private var ns
     
     private var isPlayerIslandVisible: Bool {
-        !isSearchPresented && player.playable
+        !isSearchPresented && player.hasCurrentTrack
     }
     
     private var isPlayerIslandExpanded: Bool {
@@ -51,6 +52,10 @@ struct MainView: View {
         }
         
         return visibleAblumId == currentAlbumId
+    }
+    
+    private var currentTrackAlbumId: PersistentIdentifier? {
+        player.currentTrack?.CD?.album?.persistentModelID
     }
     
     private var playerIslandExpandedBinding: Binding<Bool> {
@@ -76,7 +81,7 @@ struct MainView: View {
             } label: {
                 Image(systemName: "backward.fill")
             }
-            .disabled(player.currentPosition?.prev() == nil)
+            .disabled(!player.hasPreviousTrack)
             Button {
                 player.playPause()
             } label: {
@@ -88,7 +93,7 @@ struct MainView: View {
             } label: {
                 Image(systemName: "forward.fill")
             }
-            .disabled(player.currentPosition?.next() == nil)
+            .disabled(!player.hasNextTrack)
             
             Button {
                 // todo loop mode
@@ -189,6 +194,8 @@ struct MainView: View {
         guard let albumID = player.currentTrack?.CD?.album?.id else { return }
 
         let scrollToAlbum = {
+            isScrollingToCurrentAlbum = true
+            
             withAnimation(.easeInOut(duration: 0.35)) {
                 albumScrollProxy.scrollTo(albumID, anchor: .center)
             }
@@ -206,15 +213,32 @@ struct MainView: View {
         }
     }
     
-    private func expandPlayerIslandIfCurrentAlbumIsVisible() {
+    private func syncPlayerIslandExpansionWithVisibleAlbum() {
         guard isPlayerIslandVisible,
-              isAlbumScrollActive == false,
-              currentTrackAlbumIsVisible else {
+              isScrollingToCurrentAlbum == false else {
+            return
+        }
+        
+        let shouldExpand = currentTrackAlbumIsVisible
+        guard playerIslandExpanded != shouldExpand else {
             return
         }
         
         withAnimation(PlayerIsland.spring) {
-            playerIslandExpanded = true
+            playerIslandExpanded = shouldExpand
+        }
+    }
+    
+    private func collapsePlayerIslandIfDifferentAlbumIsPartiallyVisible() {
+        guard isPlayerIslandVisible,
+              isScrollingToCurrentAlbum == false,
+              playerIslandExpanded,
+              partiallyVisibleAlbumId != currentTrackAlbumId else {
+            return
+        }
+        
+        withAnimation(PlayerIsland.spring) {
+            playerIslandExpanded = false
         }
     }
 
@@ -228,6 +252,7 @@ struct MainView: View {
                                 AlbumPane(
                                     album: album,
                                     currentAlbumId: $visibleAblumId,
+                                    partiallyVisibleAlbumId: $partiallyVisibleAlbumId,
                                     onPaneTap: {
                                         withAnimation(PlayerIsland.spring) {
                                             playerIslandExpanded = false
@@ -280,12 +305,9 @@ struct MainView: View {
                         )
                     }
                     .onScrollPhaseChange {oldPhase,newPhase in
-                        if newPhase.isScrolling {
-                            isAlbumScrollActive = true
-                            playerIslandExpanded = false
-                        } else if oldPhase.isScrolling {
-                            isAlbumScrollActive = false
-                            expandPlayerIslandIfCurrentAlbumIsVisible()
+                        if oldPhase.isScrolling && newPhase.isScrolling == false {
+                            isScrollingToCurrentAlbum = false
+                            syncPlayerIslandExpansionWithVisibleAlbum()
                         }
                     }
                     .ignoresSafeArea(edges: .all)
@@ -308,8 +330,19 @@ struct MainView: View {
                     )
                 }
             }
+            .statusBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
             .onChange(of: visibleAblumId) {
-                expandPlayerIslandIfCurrentAlbumIsVisible()
+                guard visibleAblumId == currentTrackAlbumId else {
+                    syncPlayerIslandExpansionWithVisibleAlbum()
+                    return
+                }
+                
+                isScrollingToCurrentAlbum = false
+                syncPlayerIslandExpansionWithVisibleAlbum()
+            }
+            .onChange(of: partiallyVisibleAlbumId) {
+                collapsePlayerIslandIfDifferentAlbumIsPartiallyVisible()
             }
             .animation(PlayerIsland.spring, value: isPlayerIslandVisible)
         }

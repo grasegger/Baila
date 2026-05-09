@@ -412,7 +412,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "121"
             endingLineNumber = "121"
-            landmarkName = "replaceQueue(_:)"
+            landmarkName = "refreshPlaylist()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -428,7 +428,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "123"
             endingLineNumber = "123"
-            landmarkName = "replaceQueue(_:)"
+            landmarkName = "refreshPlaylist()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
