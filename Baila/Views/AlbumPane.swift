@@ -13,6 +13,7 @@ struct AlbumPane: View {
     let album: Album
     @Binding var currentAlbumId : PersistentIdentifier?
     @Binding var partiallyVisibleAlbumId: PersistentIdentifier?
+    @Environment(\.displayScale) private var displayScale
     
     let onPaneTap: () -> Void
     let onPlay: (Album) -> Void
@@ -44,6 +45,14 @@ struct AlbumPane: View {
         if backgroundImage == nil {
             backgroundImage = album.backgroundImage
         }
+    }
+
+    private var albumPrimaryColor: Color {
+        guard let hex = album.dominantColorHex else {
+            return .primary
+        }
+
+        return Color(hex: hex) ?? .primary
     }
 
     var body: some View {
@@ -95,8 +104,15 @@ struct AlbumPane: View {
                 .padding(10)
                 .frame(width: coverSize)
             }
-            .background(.thickMaterial)
+            .background(.ultraThinMaterial)
             .clipShape(cardShape)
+            .overlay {
+                cardShape
+                    .stroke(
+                        albumPrimaryColor.opacity(0.5),
+                        lineWidth: 1 / displayScale
+                    )
+            }
             .shadow(color: .black.opacity(0.2), radius: 16)
             .frame(width: proxy.size.width, height: proxy.size.height)
             .background {
@@ -129,6 +145,22 @@ struct AlbumPane: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private extension Color {
+    init?(hex: String) {
+        let trimmedHex = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard trimmedHex.count == 6,
+              let value = Int(trimmedHex, radix: 16) else {
+            return nil
+        }
+
+        self.init(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
     }
 }
 
