@@ -277,6 +277,10 @@ struct PlayerIsland: View {
             color: Color.black.opacity(0.4),
             radius: 16
         )
+        .shadow(
+            color: Color.white.opacity(sameAlbum ? 0 : 0.2),
+            radius: 24
+        )
         .contentShape(RoundedRectangle(cornerRadius: showsDetails ? 30 : 28, style: .continuous))
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.35).onEnded { _ in
