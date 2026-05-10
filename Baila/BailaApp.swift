@@ -42,6 +42,9 @@ struct BailaApp: App {
 
     PlaybackController.shared.configure(modelContainer: sharedModelContainer)
     TagReaderService.shared.configure(modelContainer: sharedModelContainer)
+    Task {
+      await TagReaderService.shared.backfillAlbumBackgroundLuminanceIfNeeded()
+    }
   }
  
   private static func makeModelContainer(isStoredInMemoryOnly: Bool) -> ModelContainer {

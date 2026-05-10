@@ -20,6 +20,7 @@ class Album {
   var albumBackgroundStyleVersion: Int
   var dominantColorHex: String?
   var dominantColorHexes: [String]
+  var isDark: Bool = false
   var artist: Artist?
     var type: String?
     @Relationship(deleteRule: .cascade, inverse: \CD.album) var CDs: [CD]
@@ -33,6 +34,7 @@ class Album {
     albumBackgroundStyleVersion: Int = 0,
     dominantColorHex: String? = nil,
     dominantColorHexes: [String] = [],
+    isDark: Bool = false,
     CDs: [CD],
     artist: Artist?,
     type: String? = nil
@@ -45,6 +47,7 @@ class Album {
     self.albumBackgroundStyleVersion = albumBackgroundStyleVersion
     self.dominantColorHex = dominantColorHex ?? dominantColorHexes.first
     self.dominantColorHexes = dominantColorHexes
+    self.isDark = isDark
     self.CDs = CDs
     self.artist = artist
       self.type = type
@@ -83,6 +86,29 @@ class Album {
     return UIImage(data: albumBackground)
   }
 
+  var primaryColor: Color {
+    guard let dominantColorHex,
+          let color = Self.color(fromHex: dominantColorHex) else {
+      return .primary
+    }
+
+    return color
+  }
+
+  private static func color(fromHex hex: String) -> Color? {
+    let trimmedHex = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+    guard trimmedHex.count == 6,
+          let value = Int(trimmedHex, radix: 16) else {
+      return nil
+    }
+
+    return Color(
+      red: Double((value >> 16) & 0xFF) / 255,
+      green: Double((value >> 8) & 0xFF) / 255,
+      blue: Double(value & 0xFF) / 255
+    )
+  }
+
   static func makeSortDescriptors(sortByReleaseDate: Bool, ascending: Bool) -> [SortDescriptor<Album>] {
     let order: SortOrder = ascending ? .forward : .reverse
 
@@ -108,6 +134,7 @@ class Album {
     backgroundStyleVersion: Int = 0,
     dominantColorHex: String? = nil,
     dominantColorHexes: [String] = [],
+    isDark: Bool = false,
     context: ModelContext
   ) throws -> Album {
     let name = name ?? "Unknown Album"
@@ -154,6 +181,7 @@ class Album {
       if album.dominantColorHexes.isEmpty {
         album.dominantColorHexes = dominantColorHexes
       }
+      album.isDark = isDark
       return album
     }
 
@@ -165,6 +193,7 @@ class Album {
       albumBackgroundStyleVersion: backgroundStyleVersion,
       dominantColorHex: dominantColorHex,
       dominantColorHexes: dominantColorHexes,
+      isDark: isDark,
       CDs: [],
       artist: artist
     )

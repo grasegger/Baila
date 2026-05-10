@@ -314,5 +314,5 @@ struct MainView: View {
 
 
 #Preview {
-    MainView().modelContainer(Utils.previewContainer)
+    MainView().modelContainer(PreviewContainer.previewContainer)
 }

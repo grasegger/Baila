@@ -320,7 +320,7 @@ struct PlayerIsland: View {
 }
 
 #Preview {
-    let container = Utils.previewContainer
+    let container = PreviewContainer.previewContainer
     
     VStack(spacing: 32) {
         PlayerIsland(

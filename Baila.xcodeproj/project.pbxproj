@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		CB4FE7982FAA67FE0078A633 /* DominantColors in Frameworks */ = {isa = PBXBuildFile; productRef = CB4FE7972FAA67FE0078A633 /* DominantColors */; };
 		CB8FE9AF2FA4656F00C4B156 /* SwiftTagLib in Frameworks */ = {isa = PBXBuildFile; productRef = CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */; };
+		CB947BBB2FB069B400D0B1F8 /* Glur in Frameworks */ = {isa = PBXBuildFile; productRef = CB947BBA2FB069B400D0B1F8 /* Glur */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				CB4FE7982FAA67FE0078A633 /* DominantColors in Frameworks */,
 				CB8FE9AF2FA4656F00C4B156 /* SwiftTagLib in Frameworks */,
+				CB947BBB2FB069B400D0B1F8 /* Glur in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				CB8FE9AE2FA4656F00C4B156 /* SwiftTagLib */,
 				CB4FE7972FAA67FE0078A633 /* DominantColors */,
+				CB947BBA2FB069B400D0B1F8 /* Glur */,
 			);
 			productName = Baila;
 			productReference = CBBC5A852FA3B12F005FDAEF /* Baila.app */;
@@ -106,6 +109,7 @@
 			packageReferences = (
 				CB8FE9AD2FA4656F00C4B156 /* XCRemoteSwiftPackageReference "SwiftTagLib" */,
 				CB4FE7962FAA67FE0078A633 /* XCRemoteSwiftPackageReference "DominantColors" */,
+				CB947BB92FB069B400D0B1F8 /* XCRemoteSwiftPackageReference "Glur" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CBBC5A862FA3B12F005FDAEF /* Products */;
@@ -385,6 +389,14 @@
 				kind = branch;
 			};
 		};
+		CB947BB92FB069B400D0B1F8 /* XCRemoteSwiftPackageReference "Glur" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/joogps/Glur";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -397,6 +409,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CB8FE9AD2FA4656F00C4B156 /* XCRemoteSwiftPackageReference "SwiftTagLib" */;
 			productName = SwiftTagLib;
+		};
+		CB947BBA2FB069B400D0B1F8 /* Glur */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CB947BB92FB069B400D0B1F8 /* XCRemoteSwiftPackageReference "Glur" */;
+			productName = Glur;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

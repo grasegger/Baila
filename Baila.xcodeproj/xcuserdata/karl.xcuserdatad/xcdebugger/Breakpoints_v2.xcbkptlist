@@ -76,7 +76,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "532"
             endingLineNumber = "532"
-            landmarkName = "rebuildAlbumArtworkAssets(context:)"
+            landmarkName = "dominantColorHexes(from:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -108,23 +108,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "545"
             endingLineNumber = "545"
-            landmarkName = "albumBackgroundData(artworkData:dominantColorHexes:)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "1675D514-7BB4-4668-942D-0435460B6B88"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Baila/Services/TagReaderService.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "573"
-            endingLineNumber = "573"
-            landmarkName = "albumBackgroundData(artworkData:dominantColorHexes:)"
+            landmarkName = "backgroundIsDark(albumArtData:backgroundData:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -250,9 +234,9 @@
             filePath = "Baila/Services/TagReaderService.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "686"
-            endingLineNumber = "686"
-            landmarkName = "frostHash(x:y:)"
+            startingLineNumber = "680"
+            endingLineNumber = "680"
+            landmarkName = "blurredAlbumArtworkLayer(artwork:size:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -266,9 +250,9 @@
             filePath = "Baila/Services/TagReaderService.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "696"
-            endingLineNumber = "696"
-            landmarkName = "fract(_:)"
+            startingLineNumber = "690"
+            endingLineNumber = "690"
+            landmarkName = "blurredAlbumArtworkLayer(artwork:size:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -282,9 +266,9 @@
             filePath = "Baila/Services/TagReaderService.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "672"
-            endingLineNumber = "672"
-            landmarkName = "roughFrostValue(x:y:intensity:)"
+            startingLineNumber = "666"
+            endingLineNumber = "666"
+            landmarkName = "albumBackgroundData(artworkData:dominantColorHexes:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -332,7 +316,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "396"
             endingLineNumber = "396"
-            landmarkName = "groupTagsByCD(album:tags:context:)"
+            landmarkName = "groupTagsByAlbum(artist:tags:context:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -364,8 +348,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "85"
             endingLineNumber = "85"
-            landmarkName = "getOrCreate(name:by:on:image:background:backgroundStyleVersion:dominantColorHex:dominantColorHexes:context:)"
-            landmarkType = "7">
+            landmarkName = "backgroundImage"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -380,8 +364,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "86"
             endingLineNumber = "86"
-            landmarkName = "getOrCreate(name:by:on:image:background:backgroundStyleVersion:dominantColorHex:dominantColorHexes:context:)"
-            landmarkType = "7">
+            landmarkName = "backgroundImage"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -396,7 +380,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "257"
             endingLineNumber = "257"
-            landmarkName = "completeCurrentJob()"
+            landmarkName = "run(clearCache:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

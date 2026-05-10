@@ -129,6 +129,7 @@ class TagReaderService {
     private static let fileEnumerationConcurrencyLimit = 8
     private static let tagReadConcurrencyLimit = 4
     private static let albumBackgroundStyleVersion = 1
+    private static let albumBackgroundLuminanceMigrationKey = "albumBackgroundLuminanceMigrationCompleted"
     
     @MainActor public var jobRunning = false
     @MainActor public private(set) var progressCompleted = 0
@@ -139,6 +140,40 @@ class TagReaderService {
 
     func configure(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
+    }
+
+    func backfillAlbumBackgroundLuminanceIfNeeded() async {
+        guard !UserDefaults.standard.bool(forKey: Self.albumBackgroundLuminanceMigrationKey) else { return }
+        guard let modelContainer else {
+            Logger.tagReader.error("No model container")
+            return
+        }
+
+        let context = ModelContext(modelContainer)
+
+        do {
+            let albums = try context.fetch(FetchDescriptor<Album>())
+            guard !albums.isEmpty else {
+                UserDefaults.standard.set(true, forKey: Self.albumBackgroundLuminanceMigrationKey)
+                return
+            }
+            guard albums.allSatisfy({ $0.isDark == false }) else {
+                UserDefaults.standard.set(true, forKey: Self.albumBackgroundLuminanceMigrationKey)
+                return
+            }
+
+            for album in albums {
+                album.isDark = backgroundIsDark(
+                    albumArtData: album.albumArt,
+                    backgroundData: album.albumBackground
+                )
+            }
+
+            try context.save()
+            UserDefaults.standard.set(true, forKey: Self.albumBackgroundLuminanceMigrationKey)
+        } catch {
+            Logger.tagReader.error("Failed to migrate album background luminance: \(error.localizedDescription)")
+        }
     }
 
     func run(clearCache: Bool = false) async {
@@ -499,6 +534,61 @@ class TagReaderService {
         return colors.compactMap(\.hexString)
     }
 
+    private func backgroundIsDark(albumArtData: Data?, backgroundData: Data?) -> Bool {
+        guard albumArtData != nil,
+              let backgroundData,
+              let backgroundImage = UIImage(data: backgroundData),
+              let color = averageColor(from: backgroundImage) else {
+            return false
+        }
+
+        return isDark(color)
+    }
+
+    private func isDark(_ color: UIColor) -> Bool {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        color.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+        let luminance =
+            0.2126 * red +
+            0.7152 * green +
+            0.0722 * blue
+
+        return luminance < 0.5
+    }
+
+    private func averageColor(from image: UIImage) -> UIColor? {
+        guard let inputImage = CIImage(image: image) else { return nil }
+
+        let filter = CIFilter.areaAverage()
+        filter.inputImage = inputImage
+        filter.extent = inputImage.extent
+
+        guard let outputImage = filter.outputImage else { return nil }
+
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        let context = CIContext(options: [.workingColorSpace: kCFNull as Any])
+        context.render(
+            outputImage,
+            toBitmap: &bitmap,
+            rowBytes: 4,
+            bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+            format: .RGBA8,
+            colorSpace: nil
+        )
+
+        return UIColor(
+            red: CGFloat(bitmap[0]) / 255,
+            green: CGFloat(bitmap[1]) / 255,
+            blue: CGFloat(bitmap[2]) / 255,
+            alpha: CGFloat(bitmap[3]) / 255
+        )
+    }
+
     private func coverImageData(nextTo fileURL: URL) -> Data? {
         let coverURL = fileURL.deletingLastPathComponent().appendingPathComponent("cover.jpg")
         return try? Data(contentsOf: coverURL)
@@ -521,6 +611,10 @@ class TagReaderService {
                 album.dominantColorHexes = dominantColorHexes
                 album.albumBackground = background
                 album.albumBackgroundStyleVersion = Self.albumBackgroundStyleVersion
+                album.isDark = backgroundIsDark(
+                    albumArtData: album.albumArt,
+                    backgroundData: background
+                )
                 didChange = true
             }
             await advanceProgress()
